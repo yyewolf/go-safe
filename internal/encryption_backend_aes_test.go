@@ -14,8 +14,8 @@ func TestAESEncryptionBackend(t *testing.T) {
 	}
 
 	// Initialize the encryption backend
-	backend := AESEncryptionBackend{}
-	if err := backend.Initialize(key); err != nil {
+	backend, err := NewAESEncryptionBackend(key)
+	if err != nil {
 		t.Fatalf("Failed to initialize encryption backend: %v", err)
 	}
 

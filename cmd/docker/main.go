@@ -11,6 +11,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
+	"github.com/joho/godotenv"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/yyewolf/go-safe/internal"
@@ -21,8 +22,9 @@ var interval int
 
 func main() {
 	// Initialize Viper
-	viper.AutomaticEnv()     // Read environment variables
+	godotenv.Load()          // Load environment variables from .env file
 	viper.SetEnvPrefix("GS") // Set environment variable prefix
+	viper.AutomaticEnv()     // Read environment variables
 
 	// Set default values for flags
 	viper.SetDefault("BACKUP_DIR", "/backup")

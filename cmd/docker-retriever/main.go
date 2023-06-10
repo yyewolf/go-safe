@@ -24,7 +24,7 @@ func main() {
 
 	// Set default values for flags
 	viper.SetDefault("BACKUP_DIR", "/backup")
-	viper.SetDefault("RSA_PUBKEY_LOCATION", "/rsa_pubkey.pem")
+	viper.SetDefault("AES_KEY_LOCATION", "/aes.key")
 
 	// Create and configure the Cobra command
 	rootCmd := &cobra.Command{
@@ -38,7 +38,7 @@ func main() {
 			s3Region := viper.GetString("S3_REGION")
 			s3Dir := viper.GetString("S3_DIR")
 			backupDir = viper.GetString("BACKUP_DIR")
-			rsaPrivKeyLocation := viper.GetString("RSA_PRIVKEY_LOCATION")
+			aesKeyLocation := viper.GetString("AES_KEY_LOCATION")
 
 			// Validate and process the values
 			if s3AccessID == "" || s3AccessKey == "" || s3BucketName == "" || s3Endpoint == "" {
@@ -47,22 +47,22 @@ func main() {
 				os.Exit(1)
 			}
 
-			// Check public key file permissions and existence
-			st, err := os.Stat(rsaPrivKeyLocation)
+			// Check key file permissions and existence
+			st, err := os.Stat(aesKeyLocation)
 			if err != nil {
-				fmt.Printf("Failed to stat public key file: %v\n", err)
+				fmt.Printf("Failed to stat key file: %v\n", err)
 				os.Exit(1)
 			}
 
-			// Check if the public key file is readable by anyone other than the owner
+			// Check if the key file is readable by anyone other than the owner
 			if st.Mode()&0004 != 0 {
-				fmt.Println("Public key file is readable by others")
+				fmt.Println("Key file is readable by others")
 				os.Exit(1)
 			}
 
-			// Check if the public key file is writable by anyone other than the owner
+			// Check if the key file is writable by anyone other than the owner
 			if st.Mode()&0002 != 0 {
-				fmt.Println("Public key file is writable by others")
+				fmt.Println("key file is writable by others")
 				os.Exit(1)
 			}
 
@@ -88,18 +88,15 @@ func main() {
 				os.Exit(1)
 			}
 
-			// Read the public key file
-			rsaPrivKey, err := os.ReadFile(rsaPrivKeyLocation)
+			// Read the key file
+			aesKey, err := os.ReadFile(aesKeyLocation)
 			if err != nil {
-				fmt.Printf("Failed to read public key file: %v\n", err)
+				fmt.Printf("Failed to read key file: %v\n", err)
 				os.Exit(1)
 			}
 
 			// Configure encryption backend
-			encryptionConfig := &internal.RSAEncryptionConfig{
-				PrivateKey: rsaPrivKey,
-			}
-			encryptionBackend, err := internal.NewRSAEncryptionBackend(encryptionConfig)
+			encryptionBackend, err := internal.NewAESEncryptionBackend(aesKey)
 			if err != nil {
 				fmt.Printf("Failed to configure encryption backend: %v\n", err)
 				os.Exit(1)
@@ -143,7 +140,7 @@ func main() {
 	rootCmd.Flags().String("region", "", "S3 region")
 	rootCmd.Flags().String("s3-dir", "", "S3 directory")
 	rootCmd.Flags().String("backup-dir", "", "Backup directory")
-	rootCmd.Flags().String("rsa-privkey-location", "", "RSA private key location")
+	rootCmd.Flags().String("aes-key-location", "", "AES key location")
 
 	// Bind flags to environment variables
 	viper.BindPFlag("S3_ACCESS_ID", rootCmd.Flags().Lookup("access-id"))
@@ -153,7 +150,7 @@ func main() {
 	viper.BindPFlag("S3_REGION", rootCmd.Flags().Lookup("region"))
 	viper.BindPFlag("S3_DIR", rootCmd.Flags().Lookup("s3-dir"))
 	viper.BindPFlag("BACKUP_DIR", rootCmd.Flags().Lookup("backup-dir"))
-	viper.BindPFlag("RSA_PRIVKEY_LOCATION", rootCmd.Flags().Lookup("rsa-privkey-location"))
+	viper.BindPFlag("AES_KEY_LOCATION", rootCmd.Flags().Lookup("aes-key-location"))
 
 	// Execute the Cobra command
 	if err := rootCmd.Execute(); err != nil {

@@ -29,6 +29,7 @@ func main() {
 	// Set default values for flags
 	viper.SetDefault("BACKUP_DIR", "/backup")
 	viper.SetDefault("AES_KEY_LOCATION", "/aes.key")
+	viper.SetDefault("S3_STORAGE_CLASS", "STANDARD")
 
 	// Create and configure the Cobra command
 	rootCmd := &cobra.Command{
@@ -41,6 +42,7 @@ func main() {
 			s3Endpoint := viper.GetString("S3_ENDPOINT")
 			s3Region := viper.GetString("S3_REGION")
 			s3Dir := viper.GetString("S3_DIR")
+			s3StorageClass := viper.GetString("S3_STORAGE_CLASS")
 			backupDir = viper.GetString("BACKUP_DIR")
 			aesKeyLocation := viper.GetString("AES_KEY_LOCATION")
 			interval = viper.GetInt("INTERVAL")
@@ -100,8 +102,9 @@ func main() {
 
 			// Configure S3 backend
 			s3Config := &internal.S3Config{
-				Prepend: s3Dir,
-				Bucket:  s3BucketName,
+				StorageClass: s3StorageClass,
+				Prepend:      s3Dir,
+				Bucket:       s3BucketName,
 				Config: aws.NewConfig().
 					WithEndpoint(s3Endpoint).
 					WithCredentials(

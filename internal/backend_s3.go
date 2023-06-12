@@ -12,13 +12,15 @@ import (
 
 // S3Config represents the configuration for the S3 backend.
 type S3Config struct {
-	Prepend string
-	Bucket  string
-	Config  *aws.Config
+	StorageClass string
+	Prepend      string
+	Bucket       string
+	Config       *aws.Config
 }
 
 // S3Backend represents a backend that stores and retrieves files from Amazon S3.
 type S3Backend struct {
+	storageclass      string
 	prepend           string
 	bucket            string
 	config            *aws.Config
@@ -82,9 +84,10 @@ func (b *S3Backend) Store(key string, data []byte) error {
 
 	// Upload the encrypted data to S3
 	_, err = b.s3Client.PutObject(&s3.PutObjectInput{
-		Bucket: aws.String(b.bucket),
-		Key:    aws.String(key),
-		Body:   bytes.NewReader(encryptedData),
+		Bucket:       aws.String(b.bucket),
+		Key:          aws.String(key),
+		Body:         bytes.NewReader(encryptedData),
+		StorageClass: aws.String(b.storageclass),
 	})
 	if err != nil {
 		return err

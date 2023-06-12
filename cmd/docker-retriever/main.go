@@ -8,152 +8,42 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/joho/godotenv"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 	"github.com/yyewolf/go-safe/internal"
 )
 
 var backupDir string
 
+// Create and configure the Cobra command
+var rootCmd = &cobra.Command{
+	Use: "go-safe",
+	Run: func(cmd *cobra.Command, args []string) {
+		// Configure encryption backend
+		encryptionBackend := encryptionBackend()
+		if encryptionBackend == nil {
+			fmt.Println("No encryption backend configured")
+			os.Exit(1)
+		}
+
+		// Configure storage backend
+		s3Backend := storageBackend(encryptionBackend)
+		if s3Backend == nil {
+			fmt.Println("No storage backend configured")
+			os.Exit(1)
+		}
+
+		// Check that backup directory exists and is a directory
+		if st, err := os.Stat(backupDir); err != nil || !st.IsDir() {
+			fmt.Println("Backup directory does not exist or is not a directory")
+			os.Exit(1)
+		}
+
+		fmt.Println("Attempting to download in '", backupDir, "'...")
+		downloader(s3Backend)
+	},
+}
+
 func main() {
-	// Initialize Viper
-	godotenv.Load()          // Load environment variables from .env file
-	viper.SetEnvPrefix("GS") // Set environment variable prefix
-	viper.AutomaticEnv()     // Read environment variables
-
-	// Set default values for flags
-	viper.SetDefault("BACKUP_DIR", "/backup")
-	viper.SetDefault("AES_KEY_LOCATION", "/aes.key")
-
-	// Create and configure the Cobra command
-	rootCmd := &cobra.Command{
-		Use: "go-safe",
-		Run: func(cmd *cobra.Command, args []string) {
-			// Get the values from Viper
-			s3AccessID := viper.GetString("S3_ACCESS_ID")
-			s3AccessKey := viper.GetString("S3_ACCESS_KEY")
-			s3BucketName := viper.GetString("S3_BUCKET_NAME")
-			s3Endpoint := viper.GetString("S3_ENDPOINT")
-			s3Region := viper.GetString("S3_REGION")
-			s3Dir := viper.GetString("S3_DIR")
-			backupDir = viper.GetString("BACKUP_DIR")
-			aesKeyLocation := viper.GetString("AES_KEY_LOCATION")
-
-			// Validate and process the values
-			if s3AccessID == "" || s3AccessKey == "" || s3BucketName == "" || s3Endpoint == "" {
-				fmt.Println("Missing required S3 configuration")
-				cmd.Usage()
-				os.Exit(1)
-			}
-
-			// Check key file permissions and existence
-			st, err := os.Stat(aesKeyLocation)
-			if err != nil {
-				fmt.Printf("Failed to stat key file: %v\n", err)
-				os.Exit(1)
-			}
-
-			// Check if the key file is readable by anyone other than the owner
-			if st.Mode()&0004 != 0 {
-				fmt.Println("Key file is readable by others")
-				os.Exit(1)
-			}
-
-			// Check if the key file is writable by anyone other than the owner
-			if st.Mode()&0002 != 0 {
-				fmt.Println("key file is writable by others")
-				os.Exit(1)
-			}
-
-			// Check that backup directory exists
-			st, err = os.Stat(backupDir)
-			if err != nil {
-				// mkdir -p
-				err = os.MkdirAll(backupDir, 0700)
-				if err != nil {
-					fmt.Printf("Failed to create backup directory: %v\n", err)
-					os.Exit(1)
-				}
-				st, err = os.Stat(backupDir)
-				if err != nil {
-					fmt.Printf("Failed to stat backup directory: %v\n", err)
-					os.Exit(1)
-				}
-			}
-
-			// Check that backup directory is a directory
-			if !st.IsDir() {
-				fmt.Println("Backup directory is not a directory")
-				os.Exit(1)
-			}
-
-			// Read the key file
-			aesKey, err := os.ReadFile(aesKeyLocation)
-			if err != nil {
-				fmt.Printf("Failed to read key file: %v\n", err)
-				os.Exit(1)
-			}
-
-			// Configure encryption backend
-			encryptionBackend, err := internal.NewAESEncryptionBackend(aesKey)
-			if err != nil {
-				fmt.Printf("Failed to configure encryption backend: %v\n", err)
-				os.Exit(1)
-			}
-
-			// Configure S3 backend
-			s3Config := &internal.S3Config{
-				Prepend: s3Dir,
-				Bucket:  s3BucketName,
-				Config: aws.NewConfig().
-					WithEndpoint(s3Endpoint).
-					WithCredentials(
-						credentials.NewStaticCredentials(
-							s3AccessID,
-							s3AccessKey,
-							"",
-						),
-					),
-			}
-
-			if s3Region != "" {
-				s3Config.Config = s3Config.Config.WithRegion(s3Region)
-			}
-
-			s3Backend, err := internal.NewS3Backend(s3Config, encryptionBackend)
-			if err != nil {
-				fmt.Printf("Failed to configure S3 backend: %v\n", err)
-				os.Exit(1)
-			}
-
-			fmt.Println("Starting to retrieve in '", backupDir, "'...")
-			downloader(s3Backend)
-		},
-	}
-
-	// Bind flags to Viper
-	rootCmd.Flags().String("access-id", "", "S3 access ID")
-	rootCmd.Flags().String("access-key", "", "S3 access key")
-	rootCmd.Flags().String("bucket-name", "", "S3 bucket name")
-	rootCmd.Flags().String("endpoint", "", "S3 endpoint")
-	rootCmd.Flags().String("region", "", "S3 region")
-	rootCmd.Flags().String("s3-dir", "", "S3 directory")
-	rootCmd.Flags().String("backup-dir", "", "Backup directory")
-	rootCmd.Flags().String("aes-key-location", "", "AES key location")
-
-	// Bind flags to environment variables
-	viper.BindPFlag("S3_ACCESS_ID", rootCmd.Flags().Lookup("access-id"))
-	viper.BindPFlag("S3_ACCESS_KEY", rootCmd.Flags().Lookup("access-key"))
-	viper.BindPFlag("S3_BUCKET_NAME", rootCmd.Flags().Lookup("bucket-name"))
-	viper.BindPFlag("S3_ENDPOINT", rootCmd.Flags().Lookup("endpoint"))
-	viper.BindPFlag("S3_REGION", rootCmd.Flags().Lookup("region"))
-	viper.BindPFlag("S3_DIR", rootCmd.Flags().Lookup("s3-dir"))
-	viper.BindPFlag("BACKUP_DIR", rootCmd.Flags().Lookup("backup-dir"))
-	viper.BindPFlag("AES_KEY_LOCATION", rootCmd.Flags().Lookup("aes-key-location"))
-
 	// Execute the Cobra command
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)

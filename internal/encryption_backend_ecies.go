@@ -2,6 +2,8 @@ package internal
 
 import (
 	"errors"
+	"fmt"
+	"strings"
 
 	ecies "github.com/ecies/go/v2"
 )
@@ -39,14 +41,22 @@ func (e *EciesEncryptionBackend) Initialize(cfg EncryptionConfig) error {
 		return errors.New("invalid ECIES encryption configuration")
 	}
 
+	// Remove any trailing \r\n or \n or \r or spaces
+	config.PrivateKey = strings.Trim(config.PrivateKey, "\r\n ")
+	config.PublicKey = strings.Trim(config.PublicKey, "\r\n ")
+
 	privateKey, err := ecies.NewPrivateKeyFromHex(config.PrivateKey)
 	if err == nil {
 		e.privateKey = privateKey
+	} else {
+		fmt.Println("Failed to load private key: ", err)
 	}
 
 	publicKey, err := ecies.NewPublicKeyFromHex(config.PublicKey)
 	if err == nil {
 		e.publicKey = publicKey
+	} else {
+		fmt.Println("Failed to load public key: ", err)
 	}
 
 	return nil

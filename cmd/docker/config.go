@@ -85,9 +85,6 @@ func init() {
 
 	viper.ReadInConfig()
 
-	// Unmarshal config
+	// Unmarshal co nfig
 	viper.Unmarshal(&config)
-
-	fmt.Println(viper.GetString("backup.dir"))
-	fmt.Println(config.ECIES.PublicKeyLocation)
 }

@@ -64,6 +64,7 @@ func (b *S3Backend) Initialize(cfg Config, encryptionBackend EncryptionBackend) 
 	// Create a new S3 client
 	b.s3Client = s3.New(sess)
 
+	b.storageclass = config.StorageClass
 	b.prepend = config.Prepend
 	b.bucket = config.Bucket
 	b.config = config.Config

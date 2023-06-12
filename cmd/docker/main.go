@@ -13,9 +13,6 @@ import (
 	"github.com/yyewolf/go-safe/internal"
 )
 
-var backupDir string
-var interval int
-
 // Create and configure the Cobra command
 var rootCmd = &cobra.Command{
 	Use: "go-safe",
@@ -35,16 +32,16 @@ var rootCmd = &cobra.Command{
 		}
 
 		// Check that backup directory exists and is a directory
-		if st, err := os.Stat(backupDir); err != nil || !st.IsDir() {
+		if st, err := os.Stat(config.Backup.Dir); err != nil || !st.IsDir() {
 			fmt.Println("Backup directory does not exist or is not a directory")
 			os.Exit(1)
 		}
 
-		dbFile := filepath.Join(backupDir, "db.gosafe")
+		dbFile := filepath.Join(config.Backup.Dir, "db.gosafe")
 
 		loadDatabase(dbFile)
 
-		fmt.Println("Starting backup service in '", backupDir, "'...")
+		fmt.Println("Starting backup service in '", config.Backup.Dir, "'...")
 		worker(s3Backend)
 	},
 }
@@ -58,11 +55,11 @@ func main() {
 }
 
 func worker(b internal.Backend) {
-	duration := time.Duration(interval) * time.Second
+	duration := time.Duration(config.Interval) * time.Second
 
 	for {
 		// Walk the backup directory and upload any new or modified files
-		err := filepath.Walk(backupDir, func(path string, info os.FileInfo, err error) error {
+		err := filepath.Walk(config.Backup.Dir, func(path string, info os.FileInfo, err error) error {
 			if err != nil {
 				return err
 			}
@@ -74,8 +71,8 @@ func worker(b internal.Backend) {
 
 			savePath := path
 			// Remove the backup directory from the path and add s3Dir if it's set
-			if strings.HasPrefix(path, backupDir) {
-				savePath = path[len(backupDir):]
+			if strings.HasPrefix(path, config.Backup.Dir) {
+				savePath = path[len(config.Backup.Dir):]
 				if savePath[0] == filepath.Separator {
 					savePath = savePath[1:]
 				}
@@ -142,7 +139,7 @@ func worker(b internal.Backend) {
 		// Delete any files that have been deleted
 		for path := range database {
 			// Check if the file exists
-			path = filepath.Join(backupDir, path)
+			path = filepath.Join(config.Backup.Dir, path)
 			_, err := os.Stat(path)
 			if err != nil {
 				// File does not exist, so delete it from the database
@@ -150,8 +147,8 @@ func worker(b internal.Backend) {
 
 				savePath := path
 				// Remove the backup directory from the path
-				if strings.HasPrefix(path, backupDir) {
-					savePath = path[len(backupDir):]
+				if strings.HasPrefix(path, config.Backup.Dir) {
+					savePath = path[len(config.Backup.Dir):]
 					if savePath[0] == filepath.Separator {
 						savePath = savePath[1:]
 					}
@@ -173,7 +170,7 @@ func worker(b internal.Backend) {
 		}
 
 		// Check if the database has been modified
-		data, err := os.ReadFile(filepath.Join(backupDir, "db.gosafe"))
+		data, err := os.ReadFile(filepath.Join(config.Backup.Dir, "db.gosafe"))
 		if err != nil {
 			fmt.Printf("Failed to read database: %v\n", err)
 		}

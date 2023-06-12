@@ -1,9 +1,11 @@
 package main
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/joho/godotenv"
+	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 )
 
@@ -42,6 +44,8 @@ func init() {
 	viper.EnvKeyReplacer(strings.NewReplacer(".", "_", "-", "_")) // Replace "." with "_" in environment variables
 	viper.SetEnvPrefix("GS")                                      // Set environment variable prefix
 
+	viper.AutomaticEnv() // Read environment variables
+
 	// Set default values for flags
 	viper.SetDefault("backup.dir", "/backup")
 	viper.SetDefault("s3.storage-class", "STANDARD")
@@ -73,8 +77,17 @@ func init() {
 	// Bind flags to environment variables
 	viper.BindPFlags(rootCmd.Flags())
 
-	viper.AutomaticEnv() // Read environment variables
+	rootCmd.SetGlobalNormalizationFunc(func(f *pflag.FlagSet, name string) pflag.NormalizedName {
+		replacer := strings.NewReplacer("-", "_", ".", "_")
+		viper.BindEnv(name, fmt.Sprintf("GS_%s", replacer.Replace(strings.ToUpper(name))))
+		return pflag.NormalizedName(name)
+	})
 
-	// Load into Config struct
+	viper.ReadInConfig()
+
+	// Unmarshal config
 	viper.Unmarshal(&config)
+
+	fmt.Println(viper.GetString("backup.dir"))
+	fmt.Println(config.ECIES.PublicKeyLocation)
 }

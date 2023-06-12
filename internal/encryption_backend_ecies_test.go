@@ -4,13 +4,19 @@ import (
 	"bytes"
 	"crypto/rand"
 	"testing"
+
+	ecies "github.com/ecies/go/v2"
 )
 
 func TestECIESEncryptionBackend(t *testing.T) {
-	pub := []byte{'\x04', '\x05', '\xa0', '\xa3', '\x0c', '\xa8', '\xd7', '\x1f', '\x7c', '\xfd', '\x54', '\xd4', '\x55', '\xa9', '\xdd', '\x5c', '\x27', '\x23', '\xdf', '\x9c', '\xcf', '\x9b', '\xb1', '\xf8', '\x95', '\x85', '\x39', '\x1f', '\x1d', '\x08', '\xf9', '\xb2', '\x77', '\x6c', '\x52', '\x0b', '\x8a', '\xaa', '\x39', '\xc0', '\x53', '\x66', '\xc0', '\xd7', '\x52', '\x5e', '\xd4', '\xdc', '\xa7', '\x7c', '\x26', '\x59', '\x21', '\x6b', '\x32', '\x66', '\xca', '\x4c', '\x0b', '\x78', '\x2c', '\xd0', '\xce', '\x7c', '\x01'}
+	priv, err := ecies.GenerateKey()
+	if err != nil {
+		t.Fatalf("Failed to generate ECIES key: %v", err)
+	}
+	pub := priv.PublicKey
 
 	// Initialize the encryption backend
-	backend, err := NewEciesEncryptionBackend(pub, nil)
+	backend, err := NewEciesEncryptionBackend(pub.Hex(false), priv.Hex())
 	if err != nil {
 		t.Fatalf("Failed to initialize encryption backend: %v", err)
 	}
@@ -22,23 +28,12 @@ func TestECIESEncryptionBackend(t *testing.T) {
 		t.Fatalf("Failed to encrypt small file: %v", err)
 	}
 
-	priv := []byte{'\x93', '\xce', '\xc8', '\x5e', '\x4d', '\xe9', '\xda', '\x39', '\x60', '\x47', '\x6e', '\x00', '\xe4', '\x73', '\x48', '\x82', '\x82', '\xe7', '\x47', '\x6b', '\x03', '\x49', '\x1b', '\x0d', '\xb4', '\xbf', '\x82', '\xb9', '\xf5', '\xf8', '\x68', '\x1f'}
-	backend, err = NewEciesEncryptionBackend(nil, priv)
-	if err != nil {
-		t.Fatalf("Failed to initialize encryption backend: %v", err)
-	}
-
 	decryptedSmallData, err := backend.Decrypt(encryptedSmallData)
 	if err != nil {
 		t.Fatalf("Failed to decrypt small file: %v", err)
 	}
 	if !bytes.Equal(smallData, decryptedSmallData) {
 		t.Fatal("Small file encryption and decryption failed: data mismatch")
-	}
-
-	backend, err = NewEciesEncryptionBackend(pub, priv)
-	if err != nil {
-		t.Fatalf("Failed to initialize encryption backend: %v", err)
 	}
 
 	// Test large file encryption and decryption

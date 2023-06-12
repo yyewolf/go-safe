@@ -65,14 +65,14 @@ func eciesPrivateEncryptionBackend() internal.EncryptionBackend {
 	}
 
 	// Read the key file
-	publicKey, err := os.ReadFile(config.ECIES.PrivateKeyLocation)
+	privKey, err := os.ReadFile(config.ECIES.PrivateKeyLocation)
 	if err != nil {
 		fmt.Printf("Failed to read public key file: %v\n", err)
 		os.Exit(1)
 	}
 
 	// Configure encryption backend
-	encryptionBackend, err := internal.NewEciesEncryptionBackend(publicKey, nil)
+	encryptionBackend, err := internal.NewEciesEncryptionBackend("", string(privKey))
 	if err != nil {
 		fmt.Printf("Failed to configure encryption backend: %v\n", err)
 		os.Exit(1)

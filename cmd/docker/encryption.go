@@ -72,7 +72,7 @@ func eciesPublicEncryptionBackend() internal.EncryptionBackend {
 	}
 
 	// Configure encryption backend
-	encryptionBackend, err := internal.NewEciesEncryptionBackend(publicKey, nil)
+	encryptionBackend, err := internal.NewEciesEncryptionBackend(string(publicKey), "")
 	if err != nil {
 		fmt.Printf("Failed to configure encryption backend: %v\n", err)
 		os.Exit(1)

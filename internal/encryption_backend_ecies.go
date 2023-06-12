@@ -8,8 +8,8 @@ import (
 
 // EciesEncryptionConfig represents the configuration for an ECIES encryption backend.
 type EciesEncryptionConfig struct {
-	PublicKey  []byte
-	PrivateKey []byte
+	PublicKey  string
+	PrivateKey string
 }
 
 // EciesEncryptionBackend represents an encryption backend using ECIES.
@@ -19,7 +19,7 @@ type EciesEncryptionBackend struct {
 }
 
 // NewEciesEncryptionBackend creates a new ECIES encryption backend.
-func NewEciesEncryptionBackend(publicKey []byte, privateKey []byte) (*EciesEncryptionBackend, error) {
+func NewEciesEncryptionBackend(publicKey string, privateKey string) (*EciesEncryptionBackend, error) {
 	b := EciesEncryptionBackend{}
 	err := b.Initialize(&EciesEncryptionConfig{
 		PublicKey:  publicKey,
@@ -39,14 +39,14 @@ func (e *EciesEncryptionBackend) Initialize(cfg EncryptionConfig) error {
 		return errors.New("invalid ECIES encryption configuration")
 	}
 
-	privateKey := ecies.NewPrivateKeyFromBytes(config.PrivateKey)
-	e.privateKey = privateKey
+	privateKey, err := ecies.NewPrivateKeyFromHex(config.PrivateKey)
+	if err == nil {
+		e.privateKey = privateKey
+	}
 
-	if len(config.PublicKey) != 0 {
-		publicKey, err := ecies.NewPublicKeyFromBytes(config.PublicKey)
-		if err == nil {
-			e.publicKey = publicKey
-		}
+	publicKey, err := ecies.NewPublicKeyFromHex(config.PublicKey)
+	if err == nil {
+		e.publicKey = publicKey
 	}
 
 	return nil

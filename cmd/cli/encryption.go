@@ -12,11 +12,11 @@ func encryptionBackend() encryption.EncryptionBackend {
 		return aesEncryptionBackend()
 	}
 
-	if config.ECIES.PublicKeyLocation != "" {
-		return eciesPublicEncryptionBackend()
+	if config.ECIES.PrivateKeyLocation != "" {
+		return eciesPrivateEncryptionBackend()
 	}
 
-	if config.HPKE.ClientPublicKeyLocation != "" && config.HPKE.ClientSecretKeyLocation != "" && config.HPKE.ServerPublicKeyLocation != "" {
+	if config.HPKE.ClientPublicKeyLocation != "" && config.HPKE.ServerSecretKeyLocation != "" && config.HPKE.ServerPublicKeyLocation != "" {
 		return hpkeEncryptionBackend()
 	}
 
@@ -54,9 +54,9 @@ func aesEncryptionBackend() encryption.EncryptionBackend {
 	return encryptionBackend
 }
 
-func eciesPublicEncryptionBackend() encryption.EncryptionBackend {
+func eciesPrivateEncryptionBackend() encryption.EncryptionBackend {
 	// Check key file permissions and existence
-	st, err := os.Stat(config.ECIES.PublicKeyLocation)
+	st, err := os.Stat(config.ECIES.PrivateKeyLocation)
 	if err != nil {
 		fmt.Printf("Failed to stat public key file: %v\n", err)
 		os.Exit(1)
@@ -69,14 +69,14 @@ func eciesPublicEncryptionBackend() encryption.EncryptionBackend {
 	}
 
 	// Read the key file
-	publicKey, err := os.ReadFile(config.ECIES.PublicKeyLocation)
+	privKey, err := os.ReadFile(config.ECIES.PrivateKeyLocation)
 	if err != nil {
 		fmt.Printf("Failed to read public key file: %v\n", err)
 		os.Exit(1)
 	}
 
 	// Configure encryption backend
-	encryptionBackend, err := encryption.NewEciesEncryptionBackend(string(publicKey), "")
+	encryptionBackend, err := encryption.NewEciesEncryptionBackend("", string(privKey))
 	if err != nil {
 		fmt.Printf("Failed to configure encryption backend: %v\n", err)
 		os.Exit(1)
@@ -97,7 +97,7 @@ func hpkeEncryptionBackend() encryption.EncryptionBackend {
 	}
 
 	// Check key file permissions and existence
-	if st, err := os.Stat(config.HPKE.ClientSecretKeyLocation); err != nil || st.Mode() != 0600 && st.Mode() != 0400 {
+	if st, err := os.Stat(config.HPKE.ServerSecretKeyLocation); err != nil || st.Mode() != 0600 && st.Mode() != 0400 {
 		if err != nil {
 			fmt.Printf("Failed to stat client secret key file: %v\n", err)
 			os.Exit(1)
@@ -123,7 +123,7 @@ func hpkeEncryptionBackend() encryption.EncryptionBackend {
 		os.Exit(1)
 	}
 
-	clientSecretKey, err := os.ReadFile(config.HPKE.ClientSecretKeyLocation)
+	serverSecretKey, err := os.ReadFile(config.HPKE.ServerSecretKeyLocation)
 	if err != nil {
 		fmt.Printf("Failed to read client secret key file: %v\n", err)
 		os.Exit(1)
@@ -136,7 +136,7 @@ func hpkeEncryptionBackend() encryption.EncryptionBackend {
 	}
 
 	// Configure encryption backend
-	encryptionBackend, err := encryption.NewHPKEBackend(clientPublicKey, clientSecretKey, serverPublicKey, nil, []byte(config.HPKE.PresharedKey), []byte(config.HPKE.PresharedKeyID))
+	encryptionBackend, err := encryption.NewHPKEBackend(clientPublicKey, nil, serverPublicKey, serverSecretKey, []byte(config.HPKE.PresharedKey), []byte(config.HPKE.PresharedKeyID))
 	if err != nil {
 		fmt.Printf("Failed to configure encryption backend: %v\n", err)
 		os.Exit(1)

@@ -18,6 +18,16 @@ var backupDir string
 var rootCmd = &cobra.Command{
 	Use: "go-safe",
 	Run: func(cmd *cobra.Command, args []string) {
+		if config.ECIES.GenKey {
+			eciesGenKey()
+			os.Exit(0)
+		}
+
+		if config.HPKE.GenKey {
+			hpkeGenKey()
+			os.Exit(0)
+		}
+
 		// Configure encryption backend
 		encryptionBackend := encryptionBackend()
 		if encryptionBackend == nil {

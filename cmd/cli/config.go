@@ -28,8 +28,19 @@ type Config struct {
 	} `mapstructure:"aes"`
 
 	ECIES struct {
+		GenKey             bool   `mapstructure:"gen-key"`
 		PrivateKeyLocation string `mapstructure:"private-key-location"`
 	} `mapstructure:"ecies"`
+
+	HPKE struct {
+		GenKey                  bool   `mapstructure:"gen-key"`
+		ClientPublicKeyLocation string `mapstructure:"client-public-key-location"`
+		ServerPublicKeyLocation string `mapstructure:"server-public-key-location"`
+		ServerSecretKeyLocation string `mapstructure:"server-secret-key-location"`
+
+		PresharedKey   string `mapstructure:"preshared-key"`
+		PresharedKeyID string `mapstructure:"preshared-key-id"`
+	} `mapstructure:"hpke"`
 }
 
 var config Config
@@ -57,10 +68,12 @@ func init() {
 	rootCmd.Flags().String("ecies.private-key-location", "", "ECIES private key location")
 
 	// Encryption related
-	rootCmd.MarkFlagsMutuallyExclusive("aes.key-location", "ecies.private-key-location")
+	rootCmd.MarkFlagsMutuallyExclusive("aes.key-location", "ecies.private-key-location", "hpke.server-secret-key-location")
 
 	// Misc
 	rootCmd.Flags().String("backup.dir", "", "Backup directory (where to save to)")
+	rootCmd.Flags().Bool("ecies.gen-key", false, "Generate ECIES key pair")
+	rootCmd.Flags().Bool("hpke.gen-key", false, "Generate a client and a server HPKE key pair")
 
 	// Bind flags to environment variables
 	viper.BindPFlags(rootCmd.Flags())
@@ -86,6 +99,8 @@ func initConfig() {
 	viper.BindPFlags(rootCmd.Flags())
 	viper.SetDefault("backup.dir", "/backup")
 	viper.SetDefault("s3.storage-class", "STANDARD")
+	viper.SetDefault("ecies.gen-key", false)
+	viper.SetDefault("hpke.gen-key", false)
 
 	viper.AutomaticEnv()
 

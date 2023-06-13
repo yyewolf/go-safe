@@ -32,6 +32,15 @@ type Config struct {
 		PublicKeyLocation string `mapstructure:"public-key-location"`
 	} `mapstructure:"ecies"`
 
+	HPKE struct {
+		ClientPublicKeyLocation string `mapstructure:"client-public-key-location"`
+		ClientSecretKeyLocation string `mapstructure:"client-secret-key-location"`
+		ServerPublicKeyLocation string `mapstructure:"server-public-key-location"`
+
+		PresharedKey   string `mapstructure:"preshared-key"`
+		PresharedKeyID string `mapstructure:"preshared-key-id"`
+	} `mapstructure:"hpke"`
+
 	Interval int  `mapstructure:"interval"`
 	Export   bool `mapstructure:"export"`
 	Sync     bool `mapstructure:"sync"`
@@ -61,8 +70,15 @@ func init() {
 	// ECIES Related
 	rootCmd.Flags().String("ecies.public-key-location", "", "ECIES public key location")
 
+	// HPKE Related
+	rootCmd.Flags().String("hpke.client-public-key-location", "", "HPKE client public key location")
+	rootCmd.Flags().String("hpke.client-secret-key-location", "", "HPKE client secret key location")
+	rootCmd.Flags().String("hpke.server-public-key-location", "", "HPKE server public key location")
+	rootCmd.Flags().String("hpke.preshared-key", "", "HPKE preshared key")
+	rootCmd.Flags().String("hpke.preshared-key-id", "", "HPKE preshared key ID")
+
 	// Encryption related
-	rootCmd.MarkFlagsMutuallyExclusive("aes.key-location", "ecies.public-key-location")
+	rootCmd.MarkFlagsMutuallyExclusive("aes.key-location", "ecies.public-key-location", "hpke.client-secret-key-location")
 
 	// Misc
 	rootCmd.Flags().String("backup.dir", "", "Backup directory")

@@ -142,30 +142,32 @@ func worker(b storage.StorageBackend) {
 			fmt.Printf("Failed to walk backup directory: %v\n", err)
 		}
 
-		// Delete any files that have been deleted
-		for path := range database {
-			// Check if the file exists
-			path = filepath.Join(config.Backup.Dir, path)
-			_, err := os.Stat(path)
-			if err != nil {
-				// File does not exist, so delete it from the database
-				fmt.Println("Deleting", path, "...")
-
-				savePath := path
-				// Remove the backup directory from the path
-				if strings.HasPrefix(path, config.Backup.Dir) {
-					savePath = path[len(config.Backup.Dir):]
-					if savePath[0] == filepath.Separator {
-						savePath = savePath[1:]
-					}
-				}
-
-				err = b.Delete(savePath)
+		if config.Sync {
+			// Delete any files that have been deleted
+			for path := range database {
+				// Check if the file exists
+				path = filepath.Join(config.Backup.Dir, path)
+				_, err := os.Stat(path)
 				if err != nil {
-					fmt.Printf("Failed to delete %s: %v\n", path, err)
-				}
+					// File does not exist, so delete it from the database
+					fmt.Println("Deleting", path, "...")
 
-				delete(database, path)
+					savePath := path
+					// Remove the backup directory from the path
+					if strings.HasPrefix(path, config.Backup.Dir) {
+						savePath = path[len(config.Backup.Dir):]
+						if savePath[0] == filepath.Separator {
+							savePath = savePath[1:]
+						}
+					}
+
+					err = b.Delete(savePath)
+					if err != nil {
+						fmt.Printf("Failed to delete %s: %v\n", path, err)
+					}
+
+					delete(database, path)
+				}
 			}
 		}
 

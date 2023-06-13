@@ -34,6 +34,7 @@ type Config struct {
 
 	Interval int  `mapstructure:"interval"`
 	Export   bool `mapstructure:"export"`
+	Sync     bool `mapstructure:"sync"`
 }
 
 var config Config
@@ -67,6 +68,7 @@ func init() {
 	rootCmd.Flags().String("backup.dir", "", "Backup directory")
 	rootCmd.Flags().Int("interval", 60, "Backup interval in seconds")
 	rootCmd.Flags().Bool("export", false, "Export the config file to stdout")
+	rootCmd.Flags().Bool("sync", false, "Sync the backup directory to S3 (delete local will delete remote)")
 
 	// rootCmd.SetGlobalNormalizationFunc(func(f *pflag.FlagSet, name string) pflag.NormalizedName {
 	// 	replacer := strings.NewReplacer("-", "_", ".", "_")
@@ -86,6 +88,8 @@ func initConfig() {
 	viper.SetDefault("backup.dir", "/backup")
 	viper.SetDefault("s3.storage-class", "STANDARD")
 	viper.SetDefault("interval", 60)
+	viper.SetDefault("export", false)
+	viper.SetDefault("sync", false)
 
 	viper.AutomaticEnv()
 

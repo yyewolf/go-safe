@@ -67,6 +67,13 @@ func init() {
 	// ECIES Related
 	rootCmd.Flags().String("ecies.private-key-location", "", "ECIES private key location")
 
+	// HPKE Related
+	rootCmd.Flags().String("hpke.client-public-key-location", "", "HPKE client public key location")
+	rootCmd.Flags().String("hpke.server-public-key-location", "", "HPKE server public key location")
+	rootCmd.Flags().String("hpke.server-secret-key-location", "", "HPKE server secret key location")
+	rootCmd.Flags().String("hpke.preshared-key", "", "HPKE preshared key")
+	rootCmd.Flags().String("hpke.preshared-key-id", "", "HPKE preshared key ID")
+
 	// Encryption related
 	rootCmd.MarkFlagsMutuallyExclusive("aes.key-location", "ecies.private-key-location", "hpke.server-secret-key-location")
 

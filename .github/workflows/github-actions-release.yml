@@ -15,7 +15,7 @@ jobs:
         goarch: ["386", amd64, arm64, arm]
         goarm: [7]
         binary_name: [ecies-keygen, go-safe-retriever]
-        project_path: ["./cmd/ecies", "./cmd/go-safe-retriever"]
+        project_path: ["./cmd/ecies", "./cmd/docker-retriever"]
         exclude:
           - goarch: "386"
             goos: darwin

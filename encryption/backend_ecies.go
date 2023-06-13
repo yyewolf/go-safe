@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	ecies "github.com/ecies/go/v2"
+	ecies "github.com/yyewolf/go-ecies/v2"
 )
 
 // EciesEncryptionConfig represents the configuration for an ECIES encryption backend.

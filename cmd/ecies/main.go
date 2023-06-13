@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	ecies "github.com/ecies/go/v2"
+	ecies "github.com/yyewolf/go-ecies/v2"
 )
 
 func main() {
@@ -19,7 +19,7 @@ func main() {
 	if err := os.WriteFile("priv-key.pem", []byte(priv.Hex()), 0644); err != nil {
 		panic(err)
 	}
-	if err := os.WriteFile("pub-key.pem", []byte(pub.Hex(false)), 0644); err != nil {
+	if err := os.WriteFile("pub-key.pem", []byte(pub.Hex()), 0644); err != nil {
 		panic(err)
 	}
 }

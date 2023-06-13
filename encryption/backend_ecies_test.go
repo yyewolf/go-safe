@@ -5,7 +5,7 @@ import (
 	"crypto/rand"
 	"testing"
 
-	ecies "github.com/ecies/go/v2"
+	ecies "github.com/yyewolf/go-ecies/v2"
 )
 
 func TestECIESEncryptionBackend(t *testing.T) {
@@ -16,7 +16,7 @@ func TestECIESEncryptionBackend(t *testing.T) {
 	pub := priv.PublicKey
 
 	// Initialize the encryption backend
-	backend, err := NewEciesEncryptionBackend(pub.Hex(false), priv.Hex())
+	backend, err := NewEciesEncryptionBackend(pub.Hex(), priv.Hex())
 	if err != nil {
 		t.Fatalf("Failed to initialize encryption backend: %v", err)
 	}

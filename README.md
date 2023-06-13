@@ -46,3 +46,9 @@ The following environment variables are available
 To use the backup tool properly, you must mount the `GS_BACKUP_DIR` and the encryption key of your liking.
 
 The encryption key must be user-readable only. (`chmod 0400 key`)
+
+## ECIES
+
+To generate a compatible ECIES keypair, you can use the ecies-keygen utility provided in the different releases.
+
+To use it, simply run `./ecies-keygen`.

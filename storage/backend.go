@@ -1,11 +1,13 @@
-package internal
+package storage
+
+import "github.com/yyewolf/go-safe/encryption"
 
 type Config interface {
 }
 
-type Backend interface {
+type StorageBackend interface {
 	// Initialize the backend with any necessary configuration.
-	Initialize(config Config, encryptionBackend EncryptionBackend) error
+	Initialize(config Config, encryptionBackend encryption.EncryptionBackend) error
 
 	// Store a file with the specified key and encrypted data.
 	Store(key string, data []byte) error

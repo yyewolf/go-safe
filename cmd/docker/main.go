@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
-	"github.com/yyewolf/go-safe/internal"
+	"github.com/yyewolf/go-safe/storage"
 )
 
 // Create and configure the Cobra command
@@ -54,7 +54,7 @@ func main() {
 	}
 }
 
-func worker(b internal.Backend) {
+func worker(b storage.StorageBackend) {
 	duration := time.Duration(config.Interval) * time.Second
 
 	for {

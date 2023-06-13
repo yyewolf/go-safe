@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 
 	"github.com/spf13/cobra"
-	"github.com/yyewolf/go-safe/internal"
+	"github.com/yyewolf/go-safe/storage"
 )
 
 var backupDir string
@@ -51,7 +51,7 @@ func main() {
 	}
 }
 
-func downloader(b internal.Backend) {
+func downloader(b storage.StorageBackend) {
 	// Download db.gosafe from S3
 	data, err := b.Retrieve("db.gosafe")
 	if err != nil {

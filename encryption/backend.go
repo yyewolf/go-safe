@@ -1,4 +1,4 @@
-package internal
+package encryption
 
 // EncryptionConfig represents the configuration for an encryption backend.
 type EncryptionConfig interface{}

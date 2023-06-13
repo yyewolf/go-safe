@@ -1,4 +1,4 @@
-package internal
+package storage
 
 import (
 	"bytes"
@@ -8,6 +8,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/yyewolf/go-safe/encryption"
 )
 
 // S3Config represents the configuration for the S3 backend.
@@ -24,12 +25,12 @@ type S3Backend struct {
 	prepend           string
 	bucket            string
 	config            *aws.Config
-	encryptionBackend EncryptionBackend
+	encryptionBackend encryption.EncryptionBackend
 	s3Client          *s3.S3
 }
 
 // NewS3Backend creates a new instance of the S3Backend.
-func NewS3Backend(config *S3Config, encryptionBackend EncryptionBackend) (Backend, error) {
+func NewS3Backend(config *S3Config, encryptionBackend encryption.EncryptionBackend) (StorageBackend, error) {
 	b := S3Backend{}
 	err := b.Initialize(config, encryptionBackend)
 	if err != nil {
@@ -39,7 +40,7 @@ func NewS3Backend(config *S3Config, encryptionBackend EncryptionBackend) (Backen
 }
 
 // Initialize initializes the S3 backend with the configuration and encryption backend.
-func (b *S3Backend) Initialize(cfg Config, encryptionBackend EncryptionBackend) error {
+func (b *S3Backend) Initialize(cfg Config, encryptionBackend encryption.EncryptionBackend) error {
 	config, ok := cfg.(*S3Config)
 	if !ok {
 		return errors.New("config is not of type S3Config")

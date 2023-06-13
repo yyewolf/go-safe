@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/yyewolf/go-safe/internal"
+	"github.com/yyewolf/go-safe/encryption"
 )
 
-func encryptionBackend() internal.EncryptionBackend {
+func encryptionBackend() encryption.EncryptionBackend {
 	if config.AES.KeyLocation != "" {
 		return aesEncryptionBackend()
 	}
@@ -19,7 +19,7 @@ func encryptionBackend() internal.EncryptionBackend {
 	return nil
 }
 
-func aesEncryptionBackend() internal.EncryptionBackend {
+func aesEncryptionBackend() encryption.EncryptionBackend {
 	// Check key file permissions and existence
 	st, err := os.Stat(config.AES.KeyLocation)
 	if err != nil {
@@ -41,7 +41,7 @@ func aesEncryptionBackend() internal.EncryptionBackend {
 	}
 
 	// Configure encryption backend
-	encryptionBackend, err := internal.NewAESEncryptionBackend(aesKey)
+	encryptionBackend, err := encryption.NewAESEncryptionBackend(aesKey)
 	if err != nil {
 		fmt.Printf("Failed to configure encryption backend: %v\n", err)
 		os.Exit(1)
@@ -50,7 +50,7 @@ func aesEncryptionBackend() internal.EncryptionBackend {
 	return encryptionBackend
 }
 
-func eciesPrivateEncryptionBackend() internal.EncryptionBackend {
+func eciesPrivateEncryptionBackend() encryption.EncryptionBackend {
 	// Check key file permissions and existence
 	st, err := os.Stat(config.ECIES.PrivateKeyLocation)
 	if err != nil {
@@ -72,7 +72,7 @@ func eciesPrivateEncryptionBackend() internal.EncryptionBackend {
 	}
 
 	// Configure encryption backend
-	encryptionBackend, err := internal.NewEciesEncryptionBackend("", string(privKey))
+	encryptionBackend, err := encryption.NewEciesEncryptionBackend("", string(privKey))
 	if err != nil {
 		fmt.Printf("Failed to configure encryption backend: %v\n", err)
 		os.Exit(1)

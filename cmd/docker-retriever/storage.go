@@ -6,19 +6,20 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/yyewolf/go-safe/internal"
+	"github.com/yyewolf/go-safe/encryption"
+	"github.com/yyewolf/go-safe/storage"
 )
 
-func storageBackend(encryptionBackend internal.EncryptionBackend) internal.Backend {
+func storageBackend(encryptionBackend encryption.EncryptionBackend) storage.StorageBackend {
 	if config.S3.AccessID != "" {
 		return s3Backend(encryptionBackend)
 	}
 	return nil
 }
 
-func s3Backend(encryptionBackend internal.EncryptionBackend) internal.Backend {
+func s3Backend(encryptionBackend encryption.EncryptionBackend) storage.StorageBackend {
 	// Configure S3 backend
-	s3Config := &internal.S3Config{
+	s3Config := &storage.S3Config{
 		StorageClass: config.S3.StorageClass,
 		Prepend:      config.S3.Dir,
 		Bucket:       config.S3.BucketName,
@@ -40,7 +41,7 @@ func s3Backend(encryptionBackend internal.EncryptionBackend) internal.Backend {
 		s3Config.Config = s3Config.Config.WithEndpoint(config.S3.Endpoint)
 	}
 
-	s3Backend, err := internal.NewS3Backend(s3Config, encryptionBackend)
+	s3Backend, err := storage.NewS3Backend(s3Config, encryptionBackend)
 	if err != nil {
 		fmt.Printf("Failed to configure S3 backend: %v\n", err)
 		os.Exit(1)

@@ -17,6 +17,12 @@ import (
 var rootCmd = &cobra.Command{
 	Use: "go-safe",
 	Run: func(cmd *cobra.Command, args []string) {
+		// Check if in export mode
+		if config.Export {
+			export()
+			os.Exit(0)
+		}
+
 		// Configure encryption backend
 		encryptionBackend := encryptionBackend()
 		if encryptionBackend == nil {

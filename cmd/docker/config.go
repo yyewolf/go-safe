@@ -1,11 +1,11 @@
 package main
 
 import (
-	"fmt"
+	"os"
 	"strings"
 
 	"github.com/joho/godotenv"
-	"github.com/spf13/pflag"
+	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
@@ -32,7 +32,8 @@ type Config struct {
 		PublicKeyLocation string `mapstructure:"public-key-location"`
 	} `mapstructure:"ecies"`
 
-	Interval int `mapstructure:"interval"`
+	Interval int  `mapstructure:"interval"`
+	Export   bool `mapstructure:"export"`
 }
 
 var config Config
@@ -40,15 +41,7 @@ var config Config
 func init() {
 	// Initialize Viper
 	godotenv.Load() // Load environment variables from .env file
-
-	viper.EnvKeyReplacer(strings.NewReplacer(".", "_", "-", "_")) // Replace "." with "_" in environment variables
-	viper.SetEnvPrefix("GS")                                      // Set environment variable prefix
-
-	viper.AutomaticEnv() // Read environment variables
-
-	// Set default values for flags
-	viper.SetDefault("backup.dir", "/backup")
-	viper.SetDefault("s3.storage-class", "STANDARD")
+	cobra.OnInitialize(initConfig)
 
 	// S3 Related
 	rootCmd.Flags().String("s3.access-id", "", "S3 access ID")
@@ -73,18 +66,41 @@ func init() {
 	// Misc
 	rootCmd.Flags().String("backup.dir", "", "Backup directory")
 	rootCmd.Flags().Int("interval", 60, "Backup interval in seconds")
+	rootCmd.Flags().Bool("export", false, "Export the config file to stdout")
 
-	// Bind flags to environment variables
+	// rootCmd.SetGlobalNormalizationFunc(func(f *pflag.FlagSet, name string) pflag.NormalizedName {
+	// 	replacer := strings.NewReplacer("-", "_", ".", "_")
+	// 	viper.BindEnv(name, fmt.Sprintf("GS_%s", replacer.Replace(strings.ToUpper(name))))
+	// 	return pflag.NormalizedName(name)
+	// })
+}
+
+func initConfig() {
+	viper.AddConfigPath(".")
+	viper.SetConfigType("yaml")
+	viper.SetConfigName("config")
+	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_", "-", "_"))
+	viper.SetEnvPrefix("GS")
+
 	viper.BindPFlags(rootCmd.Flags())
+	viper.SetDefault("backup.dir", "/backup")
+	viper.SetDefault("s3.storage-class", "STANDARD")
+	viper.SetDefault("interval", 60)
 
-	rootCmd.SetGlobalNormalizationFunc(func(f *pflag.FlagSet, name string) pflag.NormalizedName {
-		replacer := strings.NewReplacer("-", "_", ".", "_")
-		viper.BindEnv(name, fmt.Sprintf("GS_%s", replacer.Replace(strings.ToUpper(name))))
-		return pflag.NormalizedName(name)
-	})
+	viper.AutomaticEnv()
 
 	viper.ReadInConfig()
 
-	// Unmarshal co nfig
-	viper.Unmarshal(&config)
+	if err := viper.Unmarshal(&config); err != nil {
+		cobra.CheckErr(err)
+	}
+}
+
+func export() {
+	viper.WriteConfigAs("gosafe-config.yaml")
+
+	data, err := os.ReadFile("gosafe-config.yaml")
+	cobra.CheckErr(err)
+
+	os.Stdout.Write(data)
 }

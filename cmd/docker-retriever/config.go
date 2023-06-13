@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"github.com/joho/godotenv"
+	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
@@ -36,13 +37,7 @@ var config Config
 func init() {
 	// Initialize Viper
 	godotenv.Load() // Load environment variables from .env file
-
-	viper.EnvKeyReplacer(strings.NewReplacer(".", "_", "-", "_")) // Replace "." with "_" in environment variables
-	viper.SetEnvPrefix("GS")                                      // Set environment variable prefix
-
-	// Set default values for flags
-	viper.SetDefault("backup.dir", "/backup")
-	viper.SetDefault("s3.storage-class", "STANDARD")
+	cobra.OnInitialize(initConfig)
 
 	// S3 Related
 	rootCmd.Flags().String("s3.access-id", "", "S3 access ID")
@@ -74,4 +69,29 @@ func init() {
 
 	// Load into Config struct
 	viper.Unmarshal(&config)
+}
+
+func initConfig() {
+	viper.AddConfigPath(".")
+	viper.SetConfigType("yaml")
+	viper.SetConfigName("config")
+	viper.EnvKeyReplacer(strings.NewReplacer(".", "_", "-", "_")) // Replace "." with "_" in environment variables
+	viper.SetEnvPrefix("GS")                                      // Set environment variable prefix
+
+	// Load config from file
+	viper.SetConfigName("gosafe-config") // Name of config file (without extension)
+	viper.AddConfigPath(".")             // Path to look for the config file in
+	viper.AddConfigPath("$HOME")         // Path to look for the config file in
+
+	viper.BindPFlags(rootCmd.Flags())
+	viper.SetDefault("backup.dir", "/backup")
+	viper.SetDefault("s3.storage-class", "STANDARD")
+
+	viper.AutomaticEnv()
+
+	viper.ReadInConfig()
+
+	if err := viper.Unmarshal(&config); err != nil {
+		cobra.CheckErr(err)
+	}
 }

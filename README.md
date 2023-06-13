@@ -47,6 +47,10 @@ To use the backup tool properly, you must mount the `GS_BACKUP_DIR` and the encr
 
 The encryption key must be user-readable only. (`chmod 0400 key`)
 
+### Export config
+
+You can export your config if you need to use the retriever binary. To do, you can use the flag `--export` on the `go-safe` binary in the docker image.
+
 ## ECIES
 
 To generate a compatible ECIES keypair, you can use the ecies-keygen utility provided in the different releases.
